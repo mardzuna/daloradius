@@ -3,4 +3,10 @@
 *.db
 invoice_preview.html
 .DS_Store
-library/daloradius.conf.php
+data/
+internal_data/
+
+var/log/*.log
+var/backup/*.sql
+app/common/includes/daloradius.conf.php
+app/common/library/htmlpurifier/HTMLPurifier/DefinitionCache/Serializer/HTML/*
