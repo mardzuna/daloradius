@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,7 +41,11 @@ function dalo_csrf_token() {
 }
 
 // this function can be used for verifying if the csrf token is valid
-function dalo_check_csrf_token($token) {
+function dalo_check_csrf_token($token=null) {
+    if (is_null($token) && !empty($_POST['csrf_token'])) {
+        $token = $_POST['csrf_token'];
+    }
+
     if (empty($token)) {
         return false;
     }

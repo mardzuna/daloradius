@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,7 +15,7 @@
  *
  *********************************************************************************************************
  *
- * Authors:    Liran Tal <liran@enginx.com>
+ * Authors:    Liran Tal <liran@lirantal.com>
  *             Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
  *********************************************************************************************************
@@ -41,6 +41,8 @@ $descriptors1[] = array( 'type' => 'link', 'label' => t('button','InterfaceSetti
                          'icon' => 'tools', );
 $descriptors1[] = array( 'type' => 'link', 'label' => "Message Settings", 'href' => 'config-messages.php',
                          'icon' => 'chat-text', );
+$descriptors1[] = array( 'type' => 'link', 'label' => "Recurring Tasks Settings", 'href' => 'config-crontab.php',
+                         'icon' => 'stopwatch', );
 
 $sections = array();
 $sections[] = array( 'title' => 'Global Settings', 'descriptors' => $descriptors1 );

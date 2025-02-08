@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,13 @@
 if (strpos($_SERVER['PHP_SELF'], '/common/includes/layout.php') !== false) {
     http_response_code(404);
     exit;
+}
+
+function fix_placeholder_text($text) {
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = str_replace('"', "'", strip_tags($text));
+    $text = preg_replace('/[\s\h\v\xA0]+/u', ' ', $text);
+    return trim($text);
 }
 
 const DEFAULT_COMMON_PROLOGUE_CSS = array(
@@ -442,10 +449,11 @@ function print_checkbox($descriptor) {
 // - center => contains the page numbering controls
 // - end => contains additional controls (CSV export)
 function print_table_prologue($descriptors) {
-    echo '<div class="d-flex justify-content-between">';
+    echo '<div class="row p-0 my-3">';
 
+    echo '<div class="col-4 d-flex justify-content-start align-items-center">';
     if (isset($descriptors['start']) && is_array($descriptors['start'])) {
-        echo '<div>';
+        
         $start = $descriptors['start'];
 
         if (isset($start['common_controls'])) {
@@ -455,24 +463,25 @@ function print_table_prologue($descriptors) {
         if (isset($start['additional_controls']) && is_array($start['additional_controls'])) {
             print_additional_controls($start['additional_controls']);
         }
-        echo '</div>';
+        
     }
+    echo '</div>';
 
+    echo '<div class="col-4 d-flex justify-content-center align-items-center">';
     if (isset($descriptors['center']) && is_array($descriptors['center'])) {
         $center = $descriptors['center'];
 
         if (isset($center['draw']) && $center['draw']) {
-            echo '<div>';
             print_page_numbering($center['params']);
-            echo '</div>';
         }
     }
+    echo '</div>';
 
+    echo '<div class="col-4 d-flex justify-content-end align-items-center">';
     if (isset($descriptors['end']) && is_array($descriptors['end'])) {
-        echo '<div>';
         print_additional_controls($descriptors['end']);
-        echo '</div>';
     }
+    echo '</div>';
 
     echo '</div>';
 }
@@ -509,9 +518,20 @@ function print_table_top($descriptor=array()) {
         open_form($descriptor['form']);
     }
 
+    $class = "table table-striped table-hover";
+
+    // Check if 'class' key exists in $descriptor array
+    if (isset($descriptor['class'])) {
+        // Add the specified class to the $class variable
+        $class .= " " . $descriptor['class'];
+    }
+    
+    // Remove duplicate classes if any
+    $class = implode(" ", array_unique(explode(" ", $class)));
+
     echo <<<EOF
 
-<table class="table table-striped table-hover">
+<table class="{$class}">
     <thead>
         <tr>
 
@@ -763,17 +783,14 @@ function print_input_field($input_descriptor) {
 
     }
 
-    if (array_key_exists('tooltipText', $input_descriptor)) {
-        $tooltipText = str_replace('"', "'", strip_tags($input_descriptor['tooltipText']));
-
+    if (array_key_exists('tooltipText', $input_descriptor) && !empty($input_descriptor['tooltipText'])) {
+        $tooltipText = fix_placeholder_text($input_descriptor['tooltipText']);
         printf(' placeholder="%s"', $tooltipText);
 
         if (array_key_exists('sidebar', $input_descriptor) && $input_descriptor['sidebar'] !== false) {
             printf(' tooltipText="%s"', $tooltipText);
         }
-    }
 
-    if (array_key_exists('tooltipText', $input_descriptor) && !empty($input_descriptor['tooltipText'])) {
         $describedby_id = $input_descriptor['id'] .  '-help';
         printf(' aria-describedby="%s"', $describedby_id);
     }
@@ -802,7 +819,7 @@ function print_input_field($input_descriptor) {
                     $value = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
                     printf('<option value="%s">' . "\n", $value);
                 }
-                echo '';
+                echo '</datalist>';
                 break;
 
             case 'ajax':
@@ -973,7 +990,7 @@ function print_select($select_descriptor) {
 
 
     if (isset($select_descriptor['tooltipText'])) {
-        $tooltipText = str_replace('"', "'", strip_tags($select_descriptor['tooltipText']));
+        $tooltipText = fix_placeholder_text($select_descriptor['tooltipText']);
 
         if (!empty($tooltipText)) {
             printf(' placeholder="%s"', $tooltipText);
@@ -1166,8 +1183,7 @@ function print_form_component($descriptor) {
         $tooltip_box_id = sprintf('%s-%d-tooltip', $descriptor['id'], rand());
         $describedby_id = $descriptor['id'] .  '-help';
 
-        $tooltipText = preg_replace('/\n/', '', strip_tags(html_entity_decode($descriptor['tooltipText'])));
-        $tooltipText = preg_replace('/\s+/', ' ', trim($tooltipText));
+        $tooltipText = fix_placeholder_text($descriptor['tooltipText']);
 
         printf('<div id="%s" class="form-text">%s</div>', $describedby_id, $tooltipText);
     }
@@ -1214,7 +1230,7 @@ function menu_print_select($select_descriptor) {
     }
 
     if (array_key_exists('tooltipText', $select_descriptor)) {
-        $tooltipText = str_replace('"', "'", strip_tags($select_descriptor['tooltipText']));
+        $tooltipText = fix_placeholder_text($select_descriptor['tooltipText']);
         printf(' data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="%s"', $tooltipText);
         printf(' placeholder="%s"', $tooltipText);
     }
@@ -1405,7 +1421,7 @@ function menu_print_input_field($input_descriptor) {
     }
 
     if (array_key_exists('tooltipText', $input_descriptor)) {
-        $tooltipText = str_replace('"', "'", strip_tags($input_descriptor['tooltipText']));
+        $tooltipText = fix_placeholder_text($input_descriptor['tooltipText']);
         printf(' data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="%s"', $tooltipText);
         printf(' placeholder="%s"', $tooltipText);
     }

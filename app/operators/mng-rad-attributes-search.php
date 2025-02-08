@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,7 +15,7 @@
  *
  *********************************************************************************************************
  *
- * Authors:    Liran Tal <liran@enginx.com>
+ * Authors:    Liran Tal <liran@lirantal.com>
  *             Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
  *********************************************************************************************************
@@ -80,13 +80,13 @@
     include('include/management/pages_common.php');
 
     $sql_WHERE = array();
-    $sql_WHERE[] = "(type <> '' OR type IS NOT NULL)";
+    $sql_WHERE[] = "(`type` <> '' OR `type` IS NOT NULL)";
     if (!empty($attribute)) {
-        $sql_WHERE[] = sprintf("attribute LIKE '%%s%%'", $dbSocket->escapeSimple($attribute));
+        $sql_WHERE[] = sprintf("`attribute` LIKE '%%%s%%'", $dbSocket->escapeSimple($attribute));
     }
 
     // we use this simplified query just to initialize $numrows
-    $sql = sprintf("SELECT COUNT(id) FROM %s", $configValues['CONFIG_DB_TBL_DALODICTIONARY']);
+    $sql = sprintf("SELECT COUNT(`id`) FROM %s", $configValues['CONFIG_DB_TBL_DALODICTIONARY']);
     $sql .= " WHERE " . implode(" AND ", $sql_WHERE);
     $res = $dbSocket->query($sql);
     $numrows = $res->fetchrow()[0];

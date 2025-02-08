@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
  *                 reports the per-hour distribution of users accounted
  *                 on the specified date.
  *
- * Authors:        Liran Tal <liran@enginx.com>
+ * Authors:        Liran Tal <liran@lirantal.com>
  *                 Tiago Ratto <tiagoratto@gmail.com>
  *                 Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
@@ -146,7 +146,7 @@ if (!empty($day)) {
 
         $sql = sprintf("SELECT HOUR(acctstarttime) AS h, COUNT(DISTINCT(radacctid)) FROM %s
                          WHERE DATE(acctstarttime) <= '%s'
-                           AND (DATE(acctstoptime) >= '%s'OR (acctsessiontime = 0 AND acctinputoctets = 0 AND acctoutputoctets = 0))
+                           AND (DATE(acctstoptime) >= '%s' OR (acctsessiontime = 0 AND acctinputoctets = 0 AND acctoutputoctets = 0))
                          GROUP BY h", $configValues['CONFIG_DB_TBL_RADACCT'], $date, $date);
         $result = $dbSocket->query($sql);
 
@@ -217,5 +217,3 @@ $graph->Add($plot);
 $graph->Stroke();
 
 include('../../../common/includes/db_close.php');
-
-?>

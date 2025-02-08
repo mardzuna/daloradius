@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
  *
  * Description:    open database connection
  *
- * Authors:        Liran Tal <liran@enginx.com>
+ * Authors:        Liran Tal <liran@lirantal.com>
  *                 Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
  *********************************************************************************************************
@@ -36,9 +36,8 @@ if (strpos($_SERVER['PHP_SELF'], '/common/includes/db_open.php') !== false) {
     // this is introduced in order to provide daloRADIUS to authenticate and manage several database backends without having to
     // install several web directories of daloradius
 
-    $location = (array_key_exists('location_name', $_SESSION) &&
-                 isset($_SESSION['location_name']) &&
-                 $_SESSION['location_name'] != "default")
+    $location = (isset($_SESSION) && array_key_exists('location_name', $_SESSION) &&
+                 isset($_SESSION['location_name']) && $_SESSION['location_name'] != "default")
               ? $configValues['CONFIG_LOCATIONS'][$_SESSION['location_name']]
               : "";
 

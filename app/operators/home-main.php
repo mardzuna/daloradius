@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
  *                 fetches recent connection attempts and online users
  *                 and presents the data in formatted tables.
  * 
- * Authors:        Liran Tal <liran@enginx.com>
+ * Authors:        Liran Tal <liran@lirantal.com>
  *                 Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
  *********************************************************************************************************
@@ -156,7 +156,7 @@ HTML;
     echo <<<HTML
 <span class="d-flex align-items-center justify-content-start mb-2">
     <h1 class="fs-4 m-0">daloRADIUS</h1>
-    <a tabindex="0" class="ms-2 text-decoration-none btn btn-light" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-placement="bottom" data-bs-title="{$version}" data-bs-content="{$copyright}">
+    <a tabindex="0" class="ms-2 text-decoration-none btn btn-light" role="button" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-placement="bottom" data-bs-title="{$version}" data-bs-content="{$copyright}">
         <i class="fs-6 bi bi-c-circle"></i>
     </a>
 </span>
@@ -208,8 +208,9 @@ HTML;
     }
 
     echo '</div>';
-
-    $sql = sprintf("SELECT `username`, `acctstarttime` FROM %s WHERE `acctstoptime` IS NULL ORDER BY `acctstarttime` DESC LIMIT 10",
+    $sql = sprintf("SELECT `username`, `acctstarttime` FROM %s
+                     WHERE `acctstoptime` IS NULL OR `acctstoptime`='0000-00-00 00:00:00'
+                     ORDER BY `acctstarttime` DESC LIMIT 10",
                    $configValues['CONFIG_DB_TBL_RADACCT']);
     $res = $dbSocket->query($sql);
     $numrows = $res->numRows();

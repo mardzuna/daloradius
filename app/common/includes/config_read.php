@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
  *                 daloradius.conf.php file, populating the $configValues associative array
  *                 with the retrieved data.
  *
- * Authors:        Liran Tal <liran@enginx.com>
+ * Authors:        Liran Tal <liran@lirantal.com>
  *                 Filippo Lauria <filippo.lauria@iit.cnr.it>
  *
  *********************************************************************************************************
@@ -57,8 +57,13 @@ $configValues['OPERATORS_INCLUDE_MANAGEMENT'] = implode(DIRECTORY_SEPARATOR, [ $
 $configValues['OPERATORS_INCLUDE_CONFIG'] = implode(DIRECTORY_SEPARATOR, [ $configValues['OPERATORS_INCLUDE'], 'config' ]);
 $configValues['OPERATORS_LIBRARY'] = implode(DIRECTORY_SEPARATOR, [ $configValues['OPERATORS_ROOT'], 'library' ]);
 $configValues['OPERATORS_LIBRARY_EXTENSIONS'] = implode(DIRECTORY_SEPARATOR, [ $configValues['OPERATORS_LIBRARY'], 'extensions' ]);
+$configValues['OPERATORS_NOTIFICATIONS'] = implode(DIRECTORY_SEPARATOR, [ $configValues['OPERATORS_ROOT'], 'notifications' ]);
+$configValues['OPERATORS_NOTIFICATIONS_TEMPLATES'] = implode(DIRECTORY_SEPARATOR, [ $configValues['OPERATORS_NOTIFICATIONS'], 'templates' ]);
 
 $configValues['USERS_ROOT'] = implode(DIRECTORY_SEPARATOR, [ $configValues['APP_ROOT'], 'users' ]);
+
+$configValues['CONTRIB_ROOT'] = realpath(implode(DIRECTORY_SEPARATOR, [ $configValues['APP_ROOT'], '..', 'contrib' ]));
+$configValues['CONTRIB_SCRIPTS'] = implode(DIRECTORY_SEPARATOR, [ $configValues['CONTRIB_ROOT'], 'scripts' ]);
 
 // include version information
 include implode(DIRECTORY_SEPARATOR, [ $configValues['COMMON_INCLUDES'], 'version.php' ]);

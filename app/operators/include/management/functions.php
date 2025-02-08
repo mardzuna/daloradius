@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -108,6 +108,17 @@ function insert_single_attribute($dbSocket, $subject, $attribute, $op, $value, $
 
     return false;
 }
+
+function hotspots_exists($dbSocket, $hotspot_name) {
+    global $configValues, $logDebugSQL;
+    $sql = sprintf("SELECT COUNT(DISTINCT(`id`)) FROM %s WHERE `name` = '%s'",
+                   $configValues['CONFIG_DB_TBL_DALOHOTSPOTS'], $dbSocket->escapeSimple($hotspot_name));
+    $res = $dbSocket->query($sql);
+    $logDebugSQL .= "$sql;\n";
+
+    return $res->fetchrow()[0] > 0;
+}
+
 
 // give an open $dbSocket and a $username,
 // returns true if the provided username is found
@@ -570,4 +581,22 @@ function count_nas($dbSocket) {
     global $configValues;
     $sql = sprintf("SELECT COUNT(`id`) FROM %s", $configValues['CONFIG_DB_TBL_RADNAS']);
     return count_sql($dbSocket, $sql);  
+}
+
+/**
+ * Get the number of rows from a COUNT query.
+ *
+ * This function executes a SQL COUNT query and returns the result as an integer.
+ *
+ * @param DB $dbSocket The database connection object.
+ * @param string $query The SQL query string. It should be in the form of "SELECT COUNT(...) FROM ...".
+ *
+ * @return int The number of rows returned by the COUNT query.
+ *
+ *
+ * @note The query should return only one column with the count result.
+ *       Queries returning multiple columns or rows may lead to unexpected results.
+ */
+function get_numrows($dbSocket, $query) {
+    return $dbSocket->query($query)->fetchrow()[0];
 }

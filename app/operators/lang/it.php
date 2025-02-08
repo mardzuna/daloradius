@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,9 +31,12 @@ if (strpos($_SERVER['PHP_SELF'], '/lang/it.php') !== false) {
 $l['all']['daloRADIUS'] = sprintf("daloRADIUS %s", $configValues['DALORADIUS_VERSION']);
 $l['all']['daloRADIUSVersion'] = sprintf("version %s ", $configValues['DALORADIUS_VERSION']);
 $l['all']['copyright1'] = 'Rapporti, Fatturazione e Gestione RADIUS by <a target="_blank" href="https://github.com/lirantal/daloradius">Liran Tal</a>';
-$l['all']['copyright2'] = 'daloRADIUS - Copyright &copy; 2007-' . date('Y')
-                        . ' <a target="_blank" href="https://github.com/filippolauria">Filippo Lauria</a> e'
-                        . ' <a target="_blank" href="https://github.com/lirantal/daloradius">Liran Tal</a>.';
+$l['all']['copyright2'] = 'daloRADIUS - Copyright &copy; 2007-' . date('Y') . <<<EOF
+ <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="Follow @filippolauria on GitHub">
+  <a target="_blank" href="https://github.com/filippolauria">Filippo Lauria</a>
+</span>  and <a target="_blank" href="https://github.com/lirantal/daloradius">Liran Tal</a>.
+EOF;
+
 $l['all']['ID'] = "ID";
 $l['all']['PoolName'] = "Nome Pool";
 $l['all']['CalledStationId'] = "IdStazioneChiamata";

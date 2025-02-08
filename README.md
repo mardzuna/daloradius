@@ -4,10 +4,18 @@
 
 **daloRADIUS** is an advanced RADIUS web management application for managing hotspots and general-purpose ISP deployments. It features user management, graphical reporting, accounting, a billing engine, and integrates with [OpenStreetMap](https://www.openstreetmap.org/copyright) for geolocation. The system is based on [FreeRADIUS](https://freeradius.org/) with which it shares access to the backend database.
 
-**daloRADIUS** is written using the [PHP programming language](https://www.php.net/) and uses a [database abstraction layer](https://en.wikipedia.org/wiki/Database_abstraction_layer) (DAL) for database access. Although DAL allows the use of different [database management systems](https://en.wikipedia.org/wiki/Database#Database_management_system) (DBMSs) (e.g. MariaDB, MySQL, PostgreSQL, SQLite, MsSQL, etc.), daloRADIUS has been mainly tested on the [MariaDB](https://mariadb.org/) DBMS.
+**daloRADIUS** is written using the [PHP programming language](https://www.php.net/) and uses a [database abstraction layer](https://en.wikipedia.org/wiki/Database_abstraction_layer) (DAL) for database access. Although DAL allows the use of different [database management systems](https://en.wikipedia.org/wiki/Database#Database_management_system) (DBMSs) (e.g., MariaDB, MySQL, PostgreSQL, SQLite, MsSQL, etc.), **it is important to note that daloRADIUS has been fully tested only on the [MariaDB](https://mariadb.org/) DBMS**. Therefore, **the use of other DBMSs is not recommended**.
 
 ## Installation
+### quick installation
+To quickly install a basic standalone AAA infrastructure - based on daloRADIUS - on a [Debian](https://www.debian.org/download) environment, run the following command in a `root` terminal:
+```bash
+wget -qO - https://raw.githubusercontent.com/lirantal/daloradius/master/setup/install.sh | bash
+```
+At the end of this procedure, **the installation script will generate random credentials to be used for the operator's first login**.
 
+---
+### installation guide
 To install daloRADIUS, you can follow the installation guide available in the project's official wiki:
 
 - [Wiki: Installing daloRADIUS](../../wiki/Installing-daloRADIUS)

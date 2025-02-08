@@ -2,7 +2,7 @@
 /*
  *********************************************************************************************************
  * daloRADIUS - RADIUS Web Platform
- * Copyright (C) 2007 - Liran Tal <liran@enginx.com> All Rights Reserved.
+ * Copyright (C) 2007 - Liran Tal <liran@lirantal.com> All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,7 +43,9 @@ define("PINCODE_REGEX", '/^[a-zA-Z0-9]+$/');
 // this regex allows input like (e.g.) 127, 127., 127.0, 127.0., 127.0.0, 127.0.0 and 127.0.0.1
 define("LOOSE_IP_REGEX", '/^(((2(5[0-5]|[0-4][0-9]))|1[0-9]{2}|[1-9]?[0-9])\.?){1,4}$/');
 
-define("ALL_PRINTABLE_CHARS_REGEX", '/^[ -~]+$/');
+define("FIRST_LAST_NAME_REGEX", '/^[ \-\p{L}0-9]+$/u');
+define("SAFE_PASSWORD_REGEX", '/^[\w!@#$^&*()\-_=+{};:.<>]+$/');
+define("EMAIL_LIKE_USERNAME_REGEX", '/^[A-Za-z0-9][A-Za-z0-9_.-]*(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?$/');
 define("LOG_FILEPATH_REGEX", '/^(\/[a-zA-Z0-9]+)+(\.log)?$/');
 
 define("DB_TABLE_NAME_REGEX", '/^[a-zA-Z0-9_]+$/');
@@ -137,37 +139,41 @@ $valid_nastypes = array(
 
 // accounting custom-query options list
 $acct_custom_query_options_all = array(
-                                        "RadAcctId",
-                                        "AcctSessionId",
-                                        "AcctUniqueId",
-                                        "UserName",
-                                        "Realm",
-                                        "NASIPAddress",
-                                        "NASPortId",
-                                        "NASPortType",
-                                        "AcctStartTime",
-                                        "AcctStopTime",
-                                        "AcctSessionTime",
-                                        "AcctAuthentic",
-                                        "ConnectInfo_start",
-                                        "ConnectInfo_stop",
-                                        "AcctInputOctets",
-                                        "AcctOutputOctets",
-                                        "CalledStationId",
-                                        "CallingStationId",
-                                        "AcctTerminateCause",
-                                        "ServiceType",
-                                        "FramedProtocol",
-                                        "FramedIPAddress",
-                                        "AcctStartDelay",
-                                        "AcctStopDelay"
-                                    );
+                                        "radacctid",
+                                        "acctsessionid",
+                                        "acctuniqueid",
+                                        "username",
+                                        "realm",
+                                        "nasipaddress",
+                                        "nasportid",
+                                        "nasporttype",
+                                        "acctstarttime",
+                                        "acctupdatetime",
+                                        "acctstoptime",
+                                        "acctinterval",
+                                        "acctsessiontime",
+                                        "acctauthentic",
+                                        "connectinfo_start",
+                                        "connectinfo_stop",
+                                        "acctinputoctets",
+                                        "acctoutputoctets",
+                                        "calledstationid",
+                                        "callingstationid",
+                                        "acctterminatecause",
+                                        "servicetype",
+                                        "framedprotocol",
+                                        "framedipaddress",
+                                        "framedipv6address",
+                                        "framedipv6prefix",
+                                        "framedinterfaceid",
+                                        "delegatedipv6prefix",
+                                      );
 
 // accounting custom-query options selected by default
 $acct_custom_query_options_default = array(
-                                            "UserName", "Realm", "NASIPAddress", "AcctStartTime", "AcctStopTime",
-                                            "AcctSessionTime", "AcctInputOctets", "AcctOutputOctets", "CalledStationId",
-                                            "CallingStationId", "AcctTerminateCause", "FramedIPAddress"
+                                            "username", "nasipaddress", "acctstarttime", "acctstoptime",
+                                            "acctsessiontime", "acctinputoctets", "acctoutputoctets", "calledstationid",
+                                            "callingstationid", "acctterminatecause", "framedipaddress"
                                           );
 
 // billing history query options list
