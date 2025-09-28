@@ -22,6 +22,14 @@ function init_freeradius {
 	# Enable used tunnel for unifi
 	sed -i 's|use_tunneled_reply = no|use_tunneled_reply = yes|' $RADIUS_PATH/mods-available/eap
 
+        # Log authentication request in radius-log file
+        sed -i 's|auth = no|auth = yes|' $RADIUS_PATH/radiusd.conf
+        # Sane default log setings for authentication
+        sed -i 's|#\s*msg_goodpass =.*|msg_goodpass = "authenticationtype:\\\"%{control:Auth-Type}\\\";nasipv4address:\\\"%{request:NAS-IP-Address}\\\";nasipv6address:\\\"%{request:NAS-IPv6-Address}\\\";nasid:\\\"%{request:NAS-Identifier}\\\";srcipaddress:\\\"%{request:Packet-Src-IP-Address}\\\";nasport:\\\"%{request:NAS-Port-Id}\\\";nasporttype:\\\"%{request:NAS-Port-Type}\\\";vlan:\\\"%{reply:Tunnel-Private-Group-Id}\\\";calledstationid:\\\"%{request:Called-Station-Id}\\\";callingstationid:\\\"%{request:Calling-Station-Id}\\\";session_timeout:\\\"%{reply:Session-Timeout}\\\""|' \
+        $RADIUS_PATH/radiusd.conf
+        sed -i 's|#\s*msg_badpass =.*|msg_badpass = "authenticationtype:\\\"%{control:Auth-Type}\\\";nasipv4address:\\\"%{request:NAS-IP-Address}\\\";nasipv6address:\\\"%{request:NAS-IPv6-Address}\\\";nasid:\\\"%{request:NAS-Identifier}\\\";srcipaddress:\\\"%{request:Packet-Src-IP-Address}\\\";nasport:\\\"%{request:NAS-Port-Id}\\\";nasporttype:\\\"%{request:NAS-Port-Type}\\\";calledstationid:\\\"%{request:Called-Station-Id}\\\";callingstationid:\\\"%{request:Calling-Station-Id}\\\""|' \
+        $RADIUS_PATH/radiusd.conf
+
 	# Enable status in freeadius
 	ln -s $RADIUS_PATH/sites-available/status $RADIUS_PATH/sites-enabled/status
 
@@ -66,7 +74,16 @@ done
 
 INIT_LOCK=/data/.freeradius_init_done
 if test -f "$INIT_LOCK"; then
-	echo "Init lock file exists, skipping initial setup."
+	# Lock file exists, but verify that FreeRADIUS is actually configured
+	# This handles the case where containers are recreated but volumes persist
+	if test -L "$RADIUS_PATH/mods-enabled/sql" && grep -q "rlm_sql_mysql" "$RADIUS_PATH/mods-available/sql" 2>/dev/null; then
+		echo "Init lock file exists and FreeRADIUS is properly configured, skipping initial setup."
+	else
+		echo "Init lock file exists but FreeRADIUS configuration is missing, reinitializing..."
+		rm -f "$INIT_LOCK"
+		init_freeradius
+		date > $INIT_LOCK
+	fi
 else
 	init_freeradius
 	date > $INIT_LOCK
@@ -80,5 +97,29 @@ else
 	date > $DB_LOCK
 fi
 
-# Start freeradius in the foreground and in debug mode
-exec freeradius -f "$@"
+# make logs directory world readable
+chmod -R a+rX /var/log/freeradius
+
+# start freeradius in foreground mode
+freeradius -f "$@" &
+RADIUS_PID=$!
+
+tail -F /var/log/freeradius/radius.log &
+TAIL_PID=$!
+
+# trap SIGINT/SIGTERM and forward to both processes
+_term() {
+  echo "Caught signal—shutting down..."
+  kill -TERM "$RADIUS_PID" 2>/dev/null
+  kill -TERM "$TAIL_PID"   2>/dev/null
+  wait "$RADIUS_PID"
+  wait "$TAIL_PID"
+  exit 0
+}
+trap _term INT TERM
+
+wait "$RADIUS_PID"
+# if freeradius dies, kill the tail and exit with its code
+kill -TERM "$TAIL_PID" 2>/dev/null
+wait "$TAIL_PID"
+exit $?
