@@ -44,7 +44,7 @@ define("PINCODE_REGEX", '/^[a-zA-Z0-9]+$/');
 define("LOOSE_IP_REGEX", '/^(((2(5[0-5]|[0-4][0-9]))|1[0-9]{2}|[1-9]?[0-9])\.?){1,4}$/');
 
 define("FIRST_LAST_NAME_REGEX", '/^[ \-\p{L}0-9]+$/u');
-define("SAFE_PASSWORD_REGEX", '/^[\w!@#$^&*()\-_=+{};:.<>]+$/');
+define("SAFE_PASSWORD_REGEX", '/^\P{C}+$/u');
 define("EMAIL_LIKE_USERNAME_REGEX", '/^[A-Za-z0-9][A-Za-z0-9_.-]*(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?$/');
 define("LOG_FILEPATH_REGEX", '/^(\/[a-zA-Z0-9]+)+(\.log)?$/');
 
@@ -336,6 +336,7 @@ $valid_timeUnits = array( "second", "minute", "hour", "day", "week", "month", );
 // ordered by country code
 $operators_valid_languages = array(
                                     "ar" => "Arabic",
+                                    "de" => "German",
                                     "en" => "English",
                                     "es_ve" => "Spanish - Venezuelan",
                                     "hu" => "Hungarian",
@@ -349,6 +350,7 @@ $operators_valid_languages = array(
                                   );
 // users allowed languages
 $users_valid_languages = array(
+                                    "de" => "Deutsch (German)",
                                     "en" => "English",
                                     "it" => "Italiano (Italian)",
                                     "ro" => "Română (Romanian)",

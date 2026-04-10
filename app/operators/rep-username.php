@@ -25,7 +25,7 @@
     $operator = $_SESSION['operator_user'];
 
     include_once('../common/includes/config_read.php');
-    //~ include('library/check_operator_perm.php');
+    include('library/check_operator_perm.php');
 
     include_once("lang/main.php");
     include_once("../common/includes/validation.php");
@@ -55,7 +55,7 @@
              ? $_GET['orderBy'] : array_keys($cols)[0];
 
     $orderType = (array_key_exists('orderType', $_GET) && isset($_GET['orderType']) &&
-                  preg_match(ORDER_TYPE_REGEX, $_GET['orderType']) !== false)
+                  in_array(strtolower($_GET['orderType']), array("asc", "desc")))
                ? strtolower($_GET['orderType']) : "asc";
     
     $log = "visited page: ";
