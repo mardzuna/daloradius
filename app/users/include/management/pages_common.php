@@ -111,7 +111,7 @@ function time2str($time) {
 
 // return next billing date (Y-m-d format) based on
 // the billing recurring period and billing schedule type
-function getNextBillingDate($planRecurringBillingSchedule = "Fixed", $planRecurringPeriod, $billDates = null) {
+function getNextBillingDate($planRecurringBillingSchedule, $planRecurringPeriod, $billDates = null) {
 
     // initialize next bill date string (Y-m-d style)
 
@@ -212,7 +212,7 @@ function getNextBillingDate($planRecurringBillingSchedule = "Fixed", $planRecurr
 
 // return prev/start billing date (Y-m-d format) based on
 // the billing recurring period and billing schedule type
-function getPrevBillingDate($planRecurringBillingSchedule = "Fixed", $planRecurringPeriod, $billDates = null) {
+function getPrevBillingDate($planRecurringBillingSchedule, $planRecurringPeriod, $billDates = null) {
 
     // initialize next bill date string (Y-m-d style)
 
@@ -373,7 +373,8 @@ function printTableHead($cols, $orderBy="", $orderType="asc", $partial_query_str
             $title_asc = sprintf($title_format, strip_tags($caption), 'ascending');
             $title_desc = sprintf($title_format, strip_tags($caption), 'descending');
 
-            $href_format = '?orderBy=%s&orderType=%s' . $partial_query_string;
+            $partial_query_string_safe = str_replace('%', '%%', $partial_query_string);
+            $href_format = '?orderBy=%s&orderType=%s' . $partial_query_string_safe; 
             $href_asc = sprintf($href_format, $param, 'asc');
             $href_desc = sprintf($href_format, $param, 'desc');
 

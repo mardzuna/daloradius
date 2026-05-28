@@ -1,10 +1,10 @@
-This guide will walk you through the process of deploying a **basic open-source AAA infrastructure** on a dedicated instance of [Debian](https://www.debian.org/download). The configurations that have been tested are provided separately for Debian 11 and Debian 12, as outlined in the table below:
-Package\OS|Debian 11|Debian 12|
---|--|--|
-[MariaDB](https://mariadb.org/download/)|10.5|10.11
-[FreeRADIUS](https://freeradius.org/releases/)|3.0.x|3.2.x
-[Apache 2](https://httpd.apache.org/download.cgi)|2.4.x|2.4.x
-[PHP](https://www.php.net/downloads.php)|7.4.x|8.2.x
+This guide will walk you through the process of deploying a **basic open-source AAA infrastructure** on a dedicated instance of [Debian](https://www.debian.org/download). The configurations that have been tested are provided separately for Debian 11, Debian 12, and Debian 13, as outlined in the table below:
+Package\OS|Debian 11|Debian 12|Debian 13|
+--|--|--|--|
+[MariaDB](https://mariadb.org/download/)|10.5|10.11|11.8
+[FreeRADIUS](https://freeradius.org/releases/)|3.0.x|3.2.x|3.2.x
+[Apache 2](https://httpd.apache.org/download.cgi)|2.4.x|2.4.x|2.4.x
+[PHP](https://www.php.net/downloads.php)|7.4.x|8.2.x|8.4.x
 
 # Prerequisites
 Before proceeding with the installation, please ensure the following:
@@ -104,6 +104,54 @@ client_table = "nas"
 To finalize the installation of FreeRADIUS, enable the SQL module by creating a symbolic link to the configuration file using the following command:
 ```bash
 ln -s /etc/freeradius/3.0/mods-available/sql /etc/freeradius/3.0/mods-enabled/
+```
+
+To enforce total session-time limits such as `Max-All-Session`, also enable the SQL counter module:
+```bash
+sed -Ei 's/^[\t\s#]*dialect\s+=\s+.*$/\tdialect = "mysql"/g' /etc/freeradius/3.0/mods-available/sqlcounter
+ln -s /etc/freeradius/3.0/mods-available/sqlcounter /etc/freeradius/3.0/mods-enabled/
+```
+
+Then add the `noresetcounter` SQL counter to the `authorize` section in `/etc/freeradius/3.0/sites-available/default`, immediately after `-sql`:
+```text
+authorize {
+    ...
+    -sql
+    noresetcounter
+    ...
+}
+```
+
+This lets FreeRADIUS compare the user's accumulated accounting time with daloRADIUS check attributes such as `Max-All-Session`.
+
+To enforce daloRADIUS profile/group NAS restrictions configured as `radgroupcheck` rows, also add the following policy immediately after `noresetcounter` in the same `authorize` section:
+
+```text
+authorize {
+    ...
+    -sql
+    noresetcounter
+
+    # daloRADIUS group NAS restriction policy
+    # Enforce radgroupcheck NAS-IP-Address == restrictions as an
+    # authentication deny rule for users assigned to SQL groups.
+    if (&request:NAS-IP-Address) {
+        if ("%{sql:SELECT COUNT(*) FROM radusergroup ug JOIN radgroupcheck gc ON gc.groupname = ug.groupname WHERE ug.username = '%{User-Name}' AND gc.attribute = 'NAS-IP-Address' AND gc.op = '=='}" != "0") {
+            if ("%{sql:SELECT COUNT(*) FROM radusergroup ug JOIN radgroupcheck gc ON gc.groupname = ug.groupname WHERE ug.username = '%{User-Name}' AND gc.attribute = 'NAS-IP-Address' AND gc.op = '==' AND gc.value = '%{NAS-IP-Address}'}" == "0") {
+                reject
+            }
+        }
+    }
+    ...
+}
+```
+
+Without this explicit policy, FreeRADIUS uses `radgroupcheck` mainly to decide whether a group's reply items apply. A user that already authenticates through `radcheck` can therefore be accepted even when a profile-level `NAS-IP-Address == ...` group check does not match. The policy above treats group-level `NAS-IP-Address == ...` rows as an allow-list: if a user is assigned to one or more groups with those rows, the request is rejected unless the request's `NAS-IP-Address` matches at least one allowed value.
+
+After editing the FreeRADIUS site, validate the configuration before restarting:
+
+```bash
+freeradius -C
 ```
 
 To complete the installation, enable and restart the FreeRADIUS service using the following commands:
