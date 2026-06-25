@@ -52,7 +52,7 @@ print_blue() {
 
 print_spinner() {
     PID=$1
-    
+
     i=1
     sp="/-\|"
     echo -n ' '
@@ -114,6 +114,30 @@ system_ensure_root() {
       exit 1
     fi
   fi
+}
+
+# Function to ensure systemd can run services that protect kernel tunables.
+# Some container environments, such as Proxmox LXC containers without the
+# nesting feature enabled, cannot set up the mount namespace required by the
+# Debian FreeRADIUS unit (ProtectKernelTunables=true). Detect this before the
+# installer mutates the system and leaves a partial installation behind.
+system_check_service_namespace_support() {
+    echo -n "[+] Checking systemd service namespace support... "
+
+    if ! command -v systemd-run >/dev/null 2>&1; then
+        print_red "KO"
+        echo "[!] systemd-run is required to validate service namespace support. Aborting." >&2
+        exit 1
+    fi
+
+    if ! systemd-run --wait --collect --quiet -p ProtectKernelTunables=yes /bin/true >/dev/null 2>&1; then
+        print_red "KO"
+        echo "[!] This system cannot run services with protected kernel tunables." >&2
+        echo "[!] In Proxmox LXC containers, enable the nesting feature or provide write access to /proc/sys before running this installer." >&2
+        exit 1
+    fi
+
+    print_green "OK"
 }
 
 # Function to install necessary system packages and perform system update
@@ -232,6 +256,13 @@ freeradius_setup_sql_mod() {
 freeradius_setup_sqlcounter_mod() {
     echo -n "[+] Setting up freeRADIUS SQL counter module... "
 
+    local freeradius_default_tmp
+    freeradius_default_tmp=$(mktemp) || {
+        print_red "KO"
+        echo "[!] Failed to create temporary file. Aborting." >&2
+        exit 1
+    }
+
     if ! sed -Ei 's/^[[:space:]#]*dialect[[:space:]]+=[[:space:]]+.*$/	dialect = "mysql"/g' "${FREERADIUS_SQLCOUNTER_MOD_PATH}" >/dev/null 2>&1; then
         print_red "KO"
         echo "[!] Failed to configure freeRADIUS SQL counter module. Aborting." >&2
@@ -259,15 +290,62 @@ freeradius_setup_sqlcounter_mod() {
             /^authenticate[[:space:]]*[{]/ { in_authorize = 0 }
             { print }
             END { exit added ? 0 : 1 }
-        ' "${FREERADIUS_DEFAULT_SITE_PATH}" > /tmp/freeradius-default; then
-            rm -f /tmp/freeradius-default
+        ' "${FREERADIUS_DEFAULT_SITE_PATH}" > "${freeradius_default_tmp}"; then
+            rm -f "${freeradius_default_tmp}"
             print_red "KO"
             echo "[!] Failed to add noresetcounter to freeRADIUS authorize section. Aborting." >&2
             exit 1
         fi
-        mv /tmp/freeradius-default "${FREERADIUS_DEFAULT_SITE_PATH}"
+        mv "${freeradius_default_tmp}" "${FREERADIUS_DEFAULT_SITE_PATH}"
+    else
+        rm -f "${freeradius_default_tmp}"
     fi
 
+    print_green "OK"
+}
+
+
+# Function to set up SQL-backed session tracking for Simultaneous-Use
+freeradius_setup_sql_session_tracking() {
+    echo -n "[+] Setting up freeRADIUS SQL session tracking... "
+
+    local freeradius_default_tmp
+    freeradius_default_tmp=$(mktemp) || {
+        print_red "KO"
+        echo "[!] Failed to create temporary file. Aborting." >&2
+        exit 1
+    }
+
+    if ! awk '
+        BEGIN { in_session = 0; in_post_auth = 0; session_sql = 0; sql_session_start = 0 }
+        /^session[[:space:]]*[{]/ { in_session = 1 }
+        in_session && /^[[:space:]]*#[[:space:]]*sql[[:space:]]*$/ {
+            print "	sql"
+            session_sql = 1
+            next
+        }
+        in_session && /^[[:space:]]*sql[[:space:]]*$/ { session_sql = 1 }
+        in_session && /^}/ { in_session = 0 }
+
+        /^post-auth[[:space:]]*[{]/ { in_post_auth = 1 }
+        in_post_auth && /^[[:space:]]*#[[:space:]]*sql_session_start[[:space:]]*$/ {
+            print "	sql_session_start"
+            sql_session_start = 1
+            next
+        }
+        in_post_auth && /^[[:space:]]*sql_session_start[[:space:]]*$/ { sql_session_start = 1 }
+        in_post_auth && /^}/ { in_post_auth = 0 }
+
+        { print }
+        END { exit (session_sql && sql_session_start) ? 0 : 1 }
+    ' "${FREERADIUS_DEFAULT_SITE_PATH}" > "${freeradius_default_tmp}"; then
+        rm -f "${freeradius_default_tmp}"
+        print_red "KO"
+        echo "[!] Failed to enable SQL session tracking in freeRADIUS. Aborting." >&2
+        exit 1
+    fi
+
+    mv "${freeradius_default_tmp}" "${FREERADIUS_DEFAULT_SITE_PATH}"
     print_green "OK"
 }
 
@@ -276,7 +354,15 @@ freeradius_setup_sqlcounter_mod() {
 freeradius_setup_group_nas_restrictions() {
     echo -n "[+] Setting up freeRADIUS group NAS restriction policy... "
 
+    local freeradius_default_tmp
+    freeradius_default_tmp=$(mktemp) || {
+        print_red "KO"
+        echo "[!] Failed to create temporary file. Aborting." >&2
+        exit 1
+    }
+
     if grep -q "daloRADIUS group NAS restriction policy" "${FREERADIUS_DEFAULT_SITE_PATH}"; then
+        rm -f "${freeradius_default_tmp}"
         print_green "OK"
         return
     fi
@@ -301,14 +387,14 @@ freeradius_setup_group_nas_restrictions() {
             }
         }
         END { exit added ? 0 : 1 }
-    ' "${FREERADIUS_DEFAULT_SITE_PATH}" > /tmp/freeradius-default; then
-        rm -f /tmp/freeradius-default
+    ' "${FREERADIUS_DEFAULT_SITE_PATH}" > "${freeradius_default_tmp}"; then
+        rm -f "${freeradius_default_tmp}"
         print_red "KO"
         echo "[!] Failed to add daloRADIUS group NAS restriction policy to freeRADIUS authorize section. Aborting." >&2
         exit 1
     fi
 
-    mv /tmp/freeradius-default "${FREERADIUS_DEFAULT_SITE_PATH}"
+    mv "${freeradius_default_tmp}" "${FREERADIUS_DEFAULT_SITE_PATH}"
     print_green "OK"
 }
 
@@ -342,11 +428,11 @@ daloradius_install_dep() {
 daloradius_installation() {
     SCRIPT_PATH=$(realpath $0)
     SCRIPT_DIR=$(dirname ${SCRIPT_PATH})
-    
+
     if [ "${SCRIPT_DIR}" = "${DALORADIUS_ROOT_DIRECTORY}/setup" ]; then
         # local installation
         echo -n "[+] Setting up daloRADIUS... "
-        
+
         if [ ! -f "${DALORADIUS_CONF_FILE}.sample" ]; then
             print_red "KO"
             print_red "[!] daloRADIUS code seems to be corrupted. Aborting." >&2
@@ -509,7 +595,7 @@ EOF
 # Function to set up Apache site for operators
 apache_setup_operators_site() {
     echo -n "[+] Setting up Apache site for operators... "
-    
+
     cat <<EOF > /etc/apache2/sites-available/operators.conf
 <VirtualHost *:\${DALORADIUS_OPERATORS_PORT}>
   ServerAdmin \${DALORADIUS_SERVER_ADMIN}
@@ -596,23 +682,39 @@ apache_enable_restart() {
 # Function to load daloRADIUS SQL schema into MariaDB
 daloradius_load_sql_schema() {
     DB_DIR="${DALORADIUS_ROOT_DIRECTORY}/contrib/db"
-    echo -n "[+] Loading daloRADIUS SQL schema into MariaDB... "
+    echo -n "[+] Loading daloRADIUS SQL schemas into MariaDB... "
 
-    mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/fr3-mariadb-freeradius.sql" >/dev/null 2>&1 &
-    print_spinner $!
-    wait $!
-    if [ $? -ne 0 ]; then
+    if ! mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/fr3-mariadb-freeradius.sql" >/dev/null 2>&1; then
         print_red "KO"
-        print_red "[!] Failed to load freeRADIUS SQL schema into MariaDB. Aborting." >&2
+        print_red "[!] Failed to load FreeRADIUS base schema into MariaDB. Aborting." >&2
         exit 1
     fi
 
-    mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/mariadb-daloradius.sql" >/dev/null 2>&1 &
-    print_spinner $!
-    wait $!
-    if [ $? -ne 0 ]; then
+    if ! mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/mariadb-daloradius.sql" >/dev/null 2>&1; then
         print_red "KO"
-        print_red "[!] Failed to load daloRADIUS SQL schema into MariaDB. Aborting." >&2
+        print_red "[!] Failed to load daloRADIUS dictionaries into MariaDB. Aborting." >&2
+        exit 1
+    fi
+
+    if ! mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/mariadb-daloradius-dictionaries.sql" >/dev/null 2>&1; then
+        print_red "KO"
+        print_red "[!] Failed to load daloRADIUS base schema into MariaDB. Aborting." >&2
+        exit 1
+    fi
+
+    for f in "${DB_DIR}"/migrations/*.sql; do
+        [ -e "$f" ] || continue
+
+        if ! mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "$f" >/dev/null 2>&1; then
+            print_red "KO"
+            print_red "[!] Failed to load daloRADIUS migration schema ${f} into MariaDB. Aborting." >&2
+            exit 1
+        fi
+    done
+
+    if ! mariadb --defaults-extra-file="${MARIADB_CLIENT_FILENAME}" < "${DB_DIR}/update-performance-indexes.sql" >/dev/null 2>&1; then
+        print_red "KO"
+        print_red "[!] Failed to load daloRADIUS performance indexes into MariaDB. Aborting." >&2
         exit 1
     fi
 
@@ -646,6 +748,7 @@ system_finalize() {
 # Main function calling other functions in the correct order
 main() {
     system_ensure_root
+    system_check_service_namespace_support
     system_update
 
     mariadb_install
@@ -663,6 +766,7 @@ main() {
     freeradius_install
     freeradius_setup_sql_mod
     freeradius_setup_sqlcounter_mod
+    freeradius_setup_sql_session_tracking
     freeradius_setup_group_nas_restrictions
     freeradius_enable_restart
 
